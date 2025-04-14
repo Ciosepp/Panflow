@@ -1,12 +1,15 @@
 #include <Arduino.h>
 
 #include <max6675.h>
-#include <LiquidCrystal_I2C.h>
+#include <Wire.h>
+#include <LiquidCrystal_PCF8574.h>
 #include <Wire.h>
 
-int thermoDO = 4;
-int thermoCS = 5;
-int thermoCLK = 6;
+LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+
+int thermoDO = 12;
+int thermoCS = 11;
+int thermoCLK = 10;
 
 MAX6675 T0(thermoCLK, thermoCS, thermoDO);
 int readTemp;
@@ -19,8 +22,11 @@ long acc = 0;
 long derivate =0;
 
 void getTemp(){
-    readTemp = T0.readCelsius()*10;
-    lastSampleTime = millis();
+    if(millis() - lastSampleTime > 200){
+
+        readTemp = T0.readCelsius()*10;
+        lastSampleTime = millis();
+    }
 }
 
 int POWER = 0;
@@ -40,8 +46,19 @@ int PIDControl(int setPoint, int P, int I, int D){
     POWER = error * P + acc * I + derivate * D;
     return POWER;
 }
+int memTemp=0;
+void printTemp(){
+    if (readTemp != memTemp)
+    {
+        lcd.setCursor(12,0);
+        lcd.print("     ");
+        lcd.setCursor(12,0);
+	    lcd.print(readTemp);
+        memTemp = readTemp;
+    }
+    
+}
 
-LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 #define HEAT_PIN 9
 #define COOL_PIN 8
@@ -52,16 +69,28 @@ LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars
 
 
 void setup() {
-    lcd.backlight();
+
+    Wire.begin();
+    Wire.beginTransmission(0x27);
+    lcd.begin(16, 2);
+    
+    lcd.clear();
     lastTemp = readTemp;
     lcd.setCursor(0,0);
-    lcd.backlight();
+
+    lcd.setBacklight(255);
     lcd.print("Temperature:      C");
+
+    pinMode(9, OUTPUT);
+    delay(500);
+    Serial.begin(9600);
 }
 
 void loop() {
     getTemp();
-    lcd.setCursor(12,0);
-	lcd.print(readTemp);
+    printTemp();
+    
+    digitalWrite(9,(millis()/1000)%2);
+
 }
 
