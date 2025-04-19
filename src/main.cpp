@@ -4,6 +4,17 @@
 #include <Wire.h>
 #include <LiquidCrystal_PCF8574.h>
 #include <Wire.h>
+#include <Timer.h>
+
+#define rateCalcTime 1000
+
+
+#define HEAT_PIN 9
+#define COOL_PIN 8
+
+#define ENCA_PIN
+#define ENCB_PIN
+#define ENCP_PIN
 
 LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
@@ -21,13 +32,15 @@ long lastSampleTime=0;
 long acc = 0;
 long derivate =0;
 
+Timer rateCalcTimer(MILLIS);
+
 void getTemp(){
     if(millis() - lastSampleTime > 200){
 
         readTemp = T0.readCelsius()*10;
         lastSampleTime = millis();
-    }
-}
+    }    
+}    
 
 int POWER = 0;
 int error = 0;
@@ -41,11 +54,29 @@ int PIDControl(int setPoint, int P, int I, int D){
         derivate = readTemp - lastTemp;
         lastTemp = readTemp;
         integralTimeBuffer = millis();
-    }
+    }    
 
     POWER = error * P + acc * I + derivate * D;
     return POWER;
 }
+
+void timersInit(){
+    rateCalcTimer.setDelayTime(rateCalcTime);
+    rateCalcTimer.startDelay();
+}
+int oldTemp = 0;
+int rate= 0;
+int rateControl(int targetRate){
+    int cTemp = T0.readCelsius()*10;
+
+    if (rateCalcTimer.getDelayQ())
+    {
+        rate = cTemp - oldTemp;
+        oldTemp = cTemp;
+    }
+    return rate;
+}
+
 int memTemp=0;
 void printTemp(){
     if (readTemp != memTemp)
@@ -55,17 +86,15 @@ void printTemp(){
         lcd.setCursor(12,0);
 	    lcd.print(readTemp);
         memTemp = readTemp;
-    }
+    }    
     
-}
+}    
 
+int heatRate = 10;//[]
+int reflowTemp = 220;
+int peakTemp = 250;
+int reflowTime = 60;
 
-#define HEAT_PIN 9
-#define COOL_PIN 8
-
-#define ENCA_PIN
-#define ENCB_PIN
-#define ENCP_PIN
 
 
 void setup() {
