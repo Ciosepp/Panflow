@@ -40,7 +40,14 @@ void getTemp(){
         readTemp = T0.readCelsius()*10;
         lastSampleTime = millis();
     }    
-}    
+}  
+//v= sqr(x)
+//p = v2/r
+//p = (sqrt(x))2 = x
+#define VP_scaling 1
+int VP_linearization(int powerPerc){
+    return (int)sqrtf(powerPerc)*VP_scaling;
+}
 
 int POWER = 0;
 int error = 0;
