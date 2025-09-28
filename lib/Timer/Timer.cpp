@@ -81,3 +81,12 @@ bool Timer::getClock(){
 	}
 	return CK;
 }
+
+bool Timer::timerClock(uint32_t t){
+	if (micros() >= tCK)
+	{
+		tCK = micros() + t;
+		return true;
+	}
+	return false;
+}

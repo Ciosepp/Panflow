@@ -29,6 +29,8 @@ class Timer{
 		void setClock(long period, int dt);
 		bool getClock();
 
+		bool timerClock(uint32_t t);
+
 	private:
 		scaling_t scaling;
 		//uint32_t scaling;
@@ -45,5 +47,9 @@ class Timer{
 		uint32_t tHigh;
 		uint32_t tLow;
 		bool CK = true;
-};
+
+		uint32_t tCK = 0;
+		bool tCK_state = true;
+	
+	};
 #endif
